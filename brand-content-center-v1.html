@@ -1,0 +1,2461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI品牌内容创作中心 v1</title>
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: #FAFAFA;
+  color: #333;
+  overflow-x: hidden;
+}
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; border: none; font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+
+/* ===== Layout ===== */
+.app-container { display: flex; min-height: 100vh; }
+
+/* ===== Top Nav ===== */
+.top-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 56px; background: #fff;
+  border-bottom: 1px solid #E8E8E8;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.nav-left { display: flex; align-items: center; gap: 16px; }
+.nav-logo {
+  font-size: 18px; font-weight: 700; color: #F5A623;
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-logo .logo-icon {
+  width: 32px; height: 32px; background: linear-gradient(135deg, #F5A623, #FFBD2E);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 16px; font-weight: 800;
+}
+.nav-brand {
+  font-size: 13px; color: #999; border-left: 1px solid #E8E8E8;
+  padding-left: 16px; display: flex; align-items: center; gap: 6px;
+}
+.nav-right { display: flex; align-items: center; gap: 16px; }
+.nav-notification {
+  width: 36px; height: 36px; border-radius: 50%; background: #F5F5F5;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; position: relative; cursor: pointer;
+  transition: background 0.2s;
+}
+.nav-notification:hover { background: #EFEFEF; }
+.nav-notification .badge {
+  position: absolute; top: 4px; right: 4px;
+  width: 8px; height: 8px; background: #F5A623; border-radius: 50%;
+  border: 2px solid #fff;
+}
+.nav-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #F5A623, #E8960F);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  position: fixed; top: 56px; left: 0; bottom: 0;
+  width: 220px; background: #fff;
+  border-right: 1px solid #E8E8E8;
+  padding: 16px 0; z-index: 90;
+  display: flex; flex-direction: column;
+}
+.sidebar-menu { flex: 1; }
+.sidebar-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 24px; font-size: 14px; color: #666;
+  cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent;
+  margin: 2px 0;
+}
+.sidebar-item:hover { background: #FFF9EE; color: #333; }
+.sidebar-item.active {
+  background: #FFF3D6; color: #D4890A; font-weight: 600;
+  border-left-color: #F5A623;
+}
+.sidebar-item .icon { font-size: 18px; width: 24px; text-align: center; }
+.sidebar-footer {
+  padding: 16px 24px; border-top: 1px solid #E8E8E8;
+  font-size: 12px; color: #BBB;
+}
+
+/* ===== Main Content ===== */
+.main-content {
+  margin-left: 220px; margin-top: 56px; padding: 28px 32px;
+  flex: 1; min-height: calc(100vh - 56px);
+}
+
+/* ===== Page Transitions ===== */
+.page { display: none; opacity: 0; transition: opacity 0.35s ease; }
+.page.active { display: block; opacity: 1; }
+.page.fade-in { animation: fadeIn 0.35s ease forwards; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ===== Cards ===== */
+.card {
+  background: #fff; border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid #F0F0F0;
+  transition: box-shadow 0.25s, transform 0.25s;
+}
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+}
+.card-clickable { cursor: pointer; }
+
+/* ===== Homepage ===== */
+.section-title {
+  font-size: 18px; font-weight: 700; color: #333;
+  margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+}
+.section-title .title-bar {
+  width: 4px; height: 20px; background: linear-gradient(180deg, #F5A623, #FFBD2E);
+  border-radius: 2px;
+}
+
+/* Hot Topics Banner */
+.hot-topics-banner {
+  background: linear-gradient(135deg, #FFF8E8 0%, #FFF3D6 50%, #FFEDBE 100%);
+  border-radius: 16px; padding: 24px 28px; margin-bottom: 28px;
+  border: 1px solid #FFE4A0;
+}
+.hot-topics-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.hot-topics-header h2 {
+  font-size: 18px; font-weight: 700; color: #8B6914;
+  display: flex; align-items: center; gap: 8px;
+}
+.hot-topics-header .refresh-btn {
+  font-size: 12px; color: #B8941F; background: rgba(255,255,255,0.6);
+  padding: 6px 14px; border-radius: 20px; transition: all 0.2s;
+}
+.hot-topics-header .refresh-btn:hover { background: rgba(255,255,255,0.9); }
+.hot-topics-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+}
+.hot-topic-card {
+  background: rgba(255,255,255,0.75); border-radius: 10px;
+  padding: 16px; cursor: pointer; transition: all 0.2s;
+  border: 1px solid rgba(255,228,160,0.5);
+}
+.hot-topic-card:hover { background: #fff; transform: translateY(-1px); }
+.hot-topic-card .topic-name {
+  font-size: 14px; font-weight: 600; color: #5A4510; margin-bottom: 8px;
+}
+.hot-topic-card .topic-meta {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.hot-topic-card .heat {
+  font-size: 12px; color: #D4890A; font-weight: 600;
+  display: flex; align-items: center; gap: 4px;
+}
+.hot-topic-card .heat-bar {
+  width: 60px; height: 4px; background: #FFE4A0; border-radius: 2px; overflow: hidden;
+}
+.hot-topic-card .heat-bar-fill {
+  height: 100%; background: linear-gradient(90deg, #F5A623, #FF8C00);
+  border-radius: 2px;
+}
+.hot-topic-card .topic-tag {
+  font-size: 11px; color: #B8941F; background: #FFF3D6;
+  padding: 2px 8px; border-radius: 10px;
+}
+
+/* Quick Create */
+.quick-create-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  margin-bottom: 28px;
+}
+.quick-create-card {
+  background: #fff; border-radius: 14px; padding: 28px 24px;
+  border: 1px solid #F0F0F0; cursor: pointer;
+  transition: all 0.3s; text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.quick-create-card:hover {
+  border-color: #F5A623; box-shadow: 0 6px 20px rgba(245,166,35,0.15);
+  transform: translateY(-3px);
+}
+.quick-create-card .qc-icon {
+  font-size: 40px; margin-bottom: 14px; display: block;
+}
+.quick-create-card .qc-title {
+  font-size: 17px; font-weight: 700; color: #333; margin-bottom: 8px;
+}
+.quick-create-card .qc-desc {
+  font-size: 13px; color: #999; line-height: 1.6;
+}
+.quick-create-card .qc-arrow {
+  margin-top: 16px; color: #F5A623; font-size: 13px; font-weight: 600;
+  opacity: 0; transition: opacity 0.3s;
+}
+.quick-create-card:hover .qc-arrow { opacity: 1; }
+
+/* Recent Content */
+.recent-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+}
+.recent-card {
+  background: #fff; border-radius: 10px; overflow: hidden;
+  border: 1px solid #F0F0F0; cursor: pointer; transition: all 0.25s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+.recent-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+.recent-card .thumb {
+  height: 120px; background: #F5F5F5;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; position: relative;
+}
+.recent-card .thumb .status-badge {
+  position: absolute; top: 8px; right: 8px;
+  font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600;
+}
+.status-published { background: #E8F8E8; color: #2D9F2D; }
+.status-draft { background: #FFF3D6; color: #D4890A; }
+.status-generating { background: #E8F0FF; color: #4A7FD4; }
+.recent-card .recent-info { padding: 12px; }
+.recent-card .recent-title { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 6px; }
+.recent-card .recent-meta { font-size: 11px; color: #BBB; }
+
+/* ===== Content Creation Flow ===== */
+.creation-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+}
+.back-btn {
+  width: 36px; height: 36px; border-radius: 50%; background: #F5F5F5;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; transition: all 0.2s; color: #666;
+}
+.back-btn:hover { background: #EFEFEF; color: #333; }
+.creation-header h2 { font-size: 20px; font-weight: 700; color: #333; }
+
+/* Steps indicator - 5 steps */
+.steps-bar {
+  display: flex; align-items: center; gap: 0; margin-bottom: 28px;
+  background: #fff; border-radius: 12px; padding: 16px 24px;
+  border: 1px solid #F0F0F0;
+}
+.step-item {
+  display: flex; align-items: center; gap: 8px; white-space: nowrap;
+}
+.step-item .step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #F0F0F0; color: #999; font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s; flex-shrink: 0;
+}
+.step-item.active .step-num { background: #F5A623; color: #fff; }
+.step-item.done .step-num { background: #4CAF50; color: #fff; }
+.step-item.compliance .step-num { background: #4CAF50; color: #fff; font-size: 15px; }
+.step-item .step-label { font-size: 13px; color: #999; transition: color 0.3s; }
+.step-item.active .step-label { color: #333; font-weight: 600; }
+.step-item.done .step-label { color: #4CAF50; }
+.step-connector {
+  flex: 1; height: 2px; background: #E8E8E8; margin: 0 8px; min-width: 20px;
+}
+.step-connector.done { background: #4CAF50; }
+
+/* Step 1: Direction */
+.direction-section { margin-bottom: 24px; }
+.direction-label {
+  font-size: 14px; font-weight: 600; color: #555; margin-bottom: 12px;
+}
+.topic-select-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+  margin-bottom: 24px;
+}
+.topic-select-card {
+  padding: 14px 18px; border-radius: 10px; border: 2px solid #F0F0F0;
+  cursor: pointer; transition: all 0.2s; background: #fff;
+  display: flex; align-items: center; gap: 12px;
+}
+.topic-select-card:hover { border-color: #FFD580; background: #FFFBF0; }
+.topic-select-card.selected { border-color: #F5A623; background: #FFF8E8; }
+.topic-select-card .ts-icon { font-size: 24px; }
+.topic-select-card .ts-name { font-size: 14px; font-weight: 600; color: #333; }
+.topic-select-card .ts-heat { font-size: 11px; color: #D4890A; }
+
+.format-options, .platform-options {
+  display: flex; gap: 10px; margin-bottom: 20px;
+}
+.option-chip {
+  padding: 8px 20px; border-radius: 20px; border: 2px solid #E8E8E8;
+  font-size: 13px; color: #666; cursor: pointer; transition: all 0.2s;
+  background: #fff;
+}
+.option-chip:hover { border-color: #FFD580; color: #333; }
+.option-chip.selected { border-color: #F5A623; background: #FFF8E8; color: #D4890A; font-weight: 600; }
+
+.btn-primary {
+  background: linear-gradient(135deg, #F5A623, #FFBD2E);
+  color: #fff; font-size: 15px; font-weight: 600;
+  padding: 12px 36px; border-radius: 10px;
+  transition: all 0.25s; box-shadow: 0 2px 8px rgba(245,166,35,0.3);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(245,166,35,0.4);
+}
+.btn-primary:active { transform: translateY(0); }
+.btn-secondary {
+  background: #fff; color: #666; font-size: 14px; font-weight: 500;
+  padding: 10px 28px; border-radius: 10px; border: 1px solid #E0E0E0;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { border-color: #CCC; color: #333; }
+
+/* Step 2: Ideas */
+.loading-overlay {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 80px 0; gap: 20px;
+}
+.loading-spinner {
+  width: 48px; height: 48px; border: 4px solid #FFE4A0;
+  border-top-color: #F5A623; border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 15px; color: #999; }
+.loading-dots::after {
+  content: ''; animation: dots 1.5s steps(4, end) infinite;
+}
+@keyframes dots {
+  0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; }
+}
+
+.ideas-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+}
+.idea-card {
+  background: #fff; border-radius: 12px; padding: 20px;
+  border: 2px solid #F0F0F0; transition: all 0.25s; cursor: default;
+}
+.idea-card:hover { border-color: #FFD580; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.idea-card .idea-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #FFF3D6; color: #D4890A; font-size: 12px; font-weight: 700;
+  margin-bottom: 10px;
+}
+.idea-card .idea-title {
+  font-size: 15px; font-weight: 700; color: #333; margin-bottom: 8px;
+}
+.idea-card .idea-desc {
+  font-size: 13px; color: #777; line-height: 1.6; margin-bottom: 12px;
+}
+.idea-card .idea-meta {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.idea-tag {
+  font-size: 11px; padding: 3px 10px; border-radius: 12px;
+  background: #F5F5F5; color: #888;
+}
+.idea-tag.style-warm { background: #FFF0E0; color: #D4890A; }
+.idea-tag.style-humor { background: #E8F8E8; color: #2D9F2D; }
+.idea-tag.style-knowledge { background: #E8F0FF; color: #4A7FD4; }
+.idea-tag.style-art { background: #F3E8FF; color: #8B5CF6; }
+.idea-tag.style-doc { background: #FEE8E8; color: #D44A4A; }
+.idea-card .idea-actions {
+  display: flex; gap: 8px;
+}
+.idea-card .idea-actions button {
+  padding: 6px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  transition: all 0.2s;
+}
+.btn-idea-preview {
+  background: #F5F5F5; color: #666;
+}
+.btn-idea-preview:hover { background: #EFEFEF; color: #333; }
+.btn-idea-select {
+  background: linear-gradient(135deg, #F5A623, #FFBD2E); color: #fff;
+}
+.btn-idea-select:hover { box-shadow: 0 2px 8px rgba(245,166,35,0.3); }
+
+/* ===== Steps 3 & 4: Auto-advance loading screens ===== */
+.auto-step-screen {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 80px 0; gap: 24px;
+}
+.auto-step-screen .step-icon {
+  font-size: 48px; margin-bottom: 8px;
+}
+.auto-step-screen .step-title {
+  font-size: 18px; font-weight: 700; color: #333;
+}
+.auto-step-screen .step-desc {
+  font-size: 14px; color: #999;
+}
+.check-list {
+  display: flex; flex-direction: column; gap: 12px; margin-top: 8px;
+  min-width: 320px;
+}
+.check-item {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; color: #999; opacity: 0;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transform: translateY(6px);
+}
+.check-item.visible {
+  opacity: 1; transform: translateY(0);
+}
+.check-item.pass { color: #4CAF50; }
+.check-item.warn { color: #F5A623; }
+
+/* ===== Step 5: Preview & Export - 3 Column Layout ===== */
+.preview-3col {
+  display: flex; gap: 0; min-height: calc(100vh - 220px);
+  margin: -28px -32px -28px -32px;
+}
+
+/* Left Column: AI Chat Panel */
+.ai-chat-panel {
+  width: 280px; flex-shrink: 0;
+  background: #1E1E2E; color: #E0E0E0;
+  display: flex; flex-direction: column;
+  border-right: 1px solid #2A2A3E;
+}
+.ai-chat-header {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid #2A2A3E;
+  display: flex; align-items: center; gap: 10px;
+}
+.ai-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #F5A623, #FFBD2E);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.ai-chat-header .ai-name {
+  font-size: 14px; font-weight: 600; color: #fff;
+}
+.ai-chat-header .ai-status {
+  font-size: 11px; color: #8B8BA0;
+}
+.ai-chat-messages {
+  flex: 1; overflow-y: auto; padding: 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.ai-msg {
+  background: #2A2A3E; border-radius: 10px;
+  padding: 10px 14px; font-size: 13px; line-height: 1.6;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  color: #C8C8D8;
+}
+.ai-msg.visible {
+  opacity: 1; transform: translateY(0);
+}
+.ai-msg .msg-icon { margin-right: 6px; }
+.ai-msg.warn-msg { border-left: 3px solid #F5A623; }
+.ai-msg.success-msg { border-left: 3px solid #4CAF50; }
+.ai-msg.progress-msg { border-left: 3px solid #4A7FD4; }
+.ai-chat-input {
+  padding: 12px 16px; border-top: 1px solid #2A2A3E;
+}
+.ai-chat-input input {
+  width: 100%; background: #2A2A3E; border: 1px solid #3A3A4E;
+  border-radius: 8px; padding: 10px 14px; font-size: 13px;
+  color: #E0E0E0; outline: none; transition: border-color 0.2s;
+}
+.ai-chat-input input::placeholder { color: #6B6B80; }
+.ai-chat-input input:focus { border-color: #F5A623; }
+.ai-quick-btns {
+  display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;
+}
+.ai-quick-btn {
+  padding: 5px 10px; border-radius: 6px;
+  background: #2A2A3E; border: 1px solid #3A3A4E;
+  font-size: 11px; color: #8B8BA0; transition: all 0.2s;
+}
+.ai-quick-btn:hover { border-color: #F5A623; color: #F5A623; }
+
+/* Middle Column: Video Preview */
+.preview-center {
+  flex: 1; display: flex; flex-direction: column;
+  padding: 24px; background: #FAFAFA; min-width: 0;
+}
+.video-preview-large {
+  background: #1A1A1A; border-radius: 12px; overflow: hidden;
+  aspect-ratio: 16/9; display: flex; align-items: center;
+  justify-content: center; position: relative; margin-bottom: 20px;
+}
+.video-preview-large .play-btn {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; color: #fff; cursor: pointer;
+  transition: all 0.3s;
+}
+.video-preview-large .play-btn:hover { background: rgba(255,255,255,0.25); transform: scale(1.05); }
+.video-preview-large .gen-status {
+  position: absolute; bottom: 16px; left: 16px; right: 16px;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+  border-radius: 8px; padding: 10px 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.gen-status .gen-spinner {
+  width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #F5A623; border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.gen-status .gen-text { font-size: 12px; color: #ccc; }
+
+/* Storyboard Strip */
+.storyboard-strip {
+  display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px;
+}
+.storyboard-item {
+  flex-shrink: 0; width: 130px; cursor: pointer;
+  border-radius: 10px; overflow: hidden;
+  border: 2px solid #E8E8E8; transition: all 0.2s;
+}
+.storyboard-item:hover { border-color: #FFD580; }
+.storyboard-item.active { border-color: #F5A623; box-shadow: 0 2px 8px rgba(245,166,35,0.3); }
+.storyboard-thumb {
+  height: 72px; display: flex; align-items: center; justify-content: center;
+  font-size: 28px; position: relative;
+}
+.storyboard-thumb .shot-num {
+  position: absolute; top: 4px; left: 6px;
+  font-size: 10px; color: rgba(255,255,255,0.8);
+  background: rgba(0,0,0,0.4); padding: 1px 6px; border-radius: 4px;
+}
+.storyboard-label {
+  padding: 6px 8px; font-size: 11px; color: #666;
+  background: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sb-grad-1 { background: linear-gradient(135deg, #4A7FD4, #87CEEB); }
+.sb-grad-2 { background: linear-gradient(135deg, #4CAF50, #8BC34A); }
+.sb-grad-3 { background: linear-gradient(135deg, #FF9800, #FFB74D); }
+.sb-grad-4 { background: linear-gradient(135deg, #F5A623, #FFBD2E); }
+.sb-grad-5 { background: linear-gradient(135deg, #E91E63, #FF80AB); }
+.sb-grad-6 { background: linear-gradient(135deg, #9C27B0, #CE93D8); }
+
+/* Right Column: Config Panel */
+.config-right-panel {
+  width: 320px; flex-shrink: 0;
+  background: #fff; border-left: 1px solid #E8E8E8;
+  overflow-y: auto; padding: 20px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+/* Industry Knowledge Card */
+.knowledge-card {
+  background: #FFFBF0; border: 1px solid #FFE4A0;
+  border-radius: 12px; padding: 16px;
+}
+.knowledge-card .kc-title {
+  font-size: 14px; font-weight: 700; color: #8B6914;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+}
+.knowledge-card .kc-row {
+  margin-bottom: 10px;
+}
+.knowledge-card .kc-label {
+  font-size: 12px; color: #999; margin-bottom: 6px;
+}
+.kc-pills {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.kc-pill {
+  font-size: 11px; padding: 3px 10px; border-radius: 12px;
+}
+.kc-pill.yellow { background: #FFF3D6; color: #8B6914; }
+.kc-pill.red { background: #FEE8E8; color: #D44A4A; }
+.kc-pill.green { background: #E8F8E8; color: #2D9F2D; }
+.kc-requirement {
+  font-size: 12px; color: #777; line-height: 1.6;
+  padding: 8px 10px; background: #FFF8E8; border-radius: 8px;
+  margin-top: 4px;
+}
+
+/* Compliance Card */
+.compliance-card {
+  border-radius: 12px; padding: 16px;
+  transition: all 0.4s ease;
+}
+.compliance-card.pass {
+  background: #E8F5E9; border: 1px solid #C8E6C9;
+}
+.compliance-card.fail {
+  background: #FFF3E0; border: 1px solid #FFE0B2;
+}
+.compliance-card .cc-title {
+  font-size: 14px; font-weight: 700; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+.compliance-card.pass .cc-title { color: #2E7D32; }
+.compliance-card.fail .cc-title { color: #E65100; }
+.compliance-card .cc-item {
+  font-size: 13px; padding: 4px 0;
+  display: flex; align-items: center; gap: 6px;
+}
+.compliance-card.pass .cc-item { color: #4CAF50; }
+.compliance-card.fail .cc-item { color: #666; }
+.compliance-card.fail .cc-item.violation { color: #E65100; }
+.cc-reviewer {
+  font-size: 11px; color: #999; margin-top: 8px;
+  padding-top: 8px; border-top: 1px solid rgba(0,0,0,0.08);
+}
+.toggle-compliance {
+  margin-top: 8px; padding: 5px 12px; border-radius: 6px;
+  font-size: 11px; font-weight: 600;
+  transition: all 0.2s;
+}
+.compliance-card.pass .toggle-compliance {
+  background: #C8E6C9; color: #2E7D32;
+}
+.compliance-card.fail .toggle-compliance {
+  background: #FFE0B2; color: #E65100;
+}
+.toggle-compliance:hover { opacity: 0.8; }
+
+/* Right panel edit fields */
+.rp-section { margin-bottom: 0; }
+.rp-section label {
+  font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; display: block;
+}
+.rp-section textarea {
+  width: 100%; min-height: 120px; border: 1px solid #E0E0E0;
+  border-radius: 10px; padding: 12px; font-size: 13px;
+  line-height: 1.7; color: #333; resize: vertical;
+  transition: border-color 0.2s;
+}
+.rp-section textarea:focus { outline: none; border-color: #F5A623; }
+.rp-section select {
+  width: 100%; padding: 10px 14px; border: 1px solid #E0E0E0;
+  border-radius: 10px; font-size: 13px; color: #333;
+  background: #fff; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+}
+.rp-section select:focus { outline: none; border-color: #F5A623; }
+
+.cover-options {
+  display: flex; gap: 8px;
+}
+.cover-option {
+  flex: 1; height: 64px; border-radius: 8px; border: 2px solid #E8E8E8;
+  cursor: pointer; transition: all 0.2s; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: #999;
+}
+.cover-option:hover { border-color: #FFD580; }
+.cover-option.selected { border-color: #F5A623; }
+.cover-option .cover-thumb {
+  width: 100%; height: 100%; display: flex; align-items: center;
+  justify-content: center; font-size: 20px;
+}
+.cover-style-1 { background: linear-gradient(135deg, #FFF8E8, #FFE4A0); }
+.cover-style-2 { background: linear-gradient(135deg, #E8F0FF, #B8D4FF); }
+.cover-style-3 { background: linear-gradient(135deg, #F3E8FF, #D4B8FF); }
+
+.preview-actions-bottom {
+  display: flex; gap: 12px; padding: 16px 20px;
+  border-top: 1px solid #E8E8E8; background: #fff;
+}
+
+/* ===== Interactive Marketing ===== */
+.campaign-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  margin-bottom: 28px;
+}
+.campaign-card {
+  background: #fff; border-radius: 14px; padding: 24px;
+  border: 1px solid #F0F0F0; cursor: pointer;
+  transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.campaign-card:hover {
+  border-color: #F5A623; box-shadow: 0 6px 20px rgba(245,166,35,0.12);
+  transform: translateY(-2px);
+}
+.campaign-card .camp-icon { font-size: 36px; margin-bottom: 14px; display: block; }
+.campaign-card .camp-title { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 6px; }
+.campaign-card .camp-desc { font-size: 13px; color: #999; line-height: 1.5; margin-bottom: 14px; }
+.campaign-card .camp-btn {
+  font-size: 13px; color: #F5A623; font-weight: 600;
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* Campaign Config */
+.config-section {
+  background: #fff; border-radius: 12px; padding: 24px;
+  border: 1px solid #F0F0F0; margin-bottom: 20px;
+}
+.config-section h3 {
+  font-size: 15px; font-weight: 700; color: #333; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.config-input {
+  width: 100%; padding: 10px 14px; border: 1px solid #E0E0E0;
+  border-radius: 10px; font-size: 14px; color: #333;
+  transition: border-color 0.2s;
+}
+.config-input:focus { outline: none; border-color: #F5A623; }
+
+.theme-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+}
+.theme-card {
+  border-radius: 10px; overflow: hidden; cursor: pointer;
+  border: 2px solid #E8E8E8; transition: all 0.2s;
+}
+.theme-card:hover { border-color: #FFD580; }
+.theme-card.selected { border-color: #F5A623; }
+.theme-card .theme-thumb {
+  height: 80px; display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+}
+.theme-card .theme-name {
+  padding: 8px; text-align: center; font-size: 12px; color: #666;
+  background: #FAFAFA;
+}
+.theme-ink { background: linear-gradient(135deg, #F5F5F0, #E8E0D0); }
+.theme-cyber { background: linear-gradient(135deg, #1A1A2E, #16213E); }
+.theme-oil { background: linear-gradient(135deg, #FFF0E0, #FFD4A0); }
+.theme-comic { background: linear-gradient(135deg, #FFE8F0, #FFB8D0); }
+.theme-retro { background: linear-gradient(135deg, #E8D8C0, #C8B090); }
+
+.date-row {
+  display: flex; gap: 12px; align-items: center;
+}
+.date-row input[type="date"] {
+  padding: 10px 14px; border: 1px solid #E0E0E0; border-radius: 10px;
+  font-size: 13px; color: #333;
+}
+.date-row input[type="date"]:focus { outline: none; border-color: #F5A623; }
+.date-row span { color: #999; font-size: 13px; }
+
+.reward-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+}
+.reward-item {
+  padding: 14px; border-radius: 10px; border: 1px solid #E8E8E8;
+  text-align: center;
+}
+.reward-item .reward-label { font-size: 12px; color: #999; margin-bottom: 6px; }
+.reward-item .reward-value { font-size: 14px; font-weight: 600; color: #333; }
+
+/* Phone Preview Modal */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 200;
+  display: none; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.3s;
+}
+.modal-overlay.show { display: flex; opacity: 1; }
+.phone-frame {
+  width: 375px; height: 680px; background: #fff;
+  border-radius: 36px; border: 8px solid #333;
+  overflow: hidden; position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.phone-notch {
+  width: 150px; height: 28px; background: #333;
+  border-radius: 0 0 16px 16px; margin: 0 auto;
+}
+.phone-content {
+  padding: 16px; height: calc(100% - 28px); overflow-y: auto;
+}
+.phone-content h3 {
+  font-size: 18px; font-weight: 700; text-align: center;
+  margin: 16px 0 12px; color: #333;
+}
+.phone-content .phone-desc {
+  font-size: 13px; color: #777; text-align: center; margin-bottom: 20px;
+}
+.phone-upload-area {
+  border: 2px dashed #E0E0E0; border-radius: 12px;
+  padding: 32px; text-align: center; margin-bottom: 16px;
+}
+.phone-upload-area .upload-icon { font-size: 36px; margin-bottom: 8px; }
+.phone-upload-area .upload-text { font-size: 13px; color: #999; }
+.phone-btn {
+  width: 100%; padding: 12px; border-radius: 24px;
+  background: linear-gradient(135deg, #F5A623, #FFBD2E);
+  color: #fff; font-size: 15px; font-weight: 600;
+  text-align: center;
+}
+.modal-close {
+  position: absolute; top: -40px; right: -40px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,0.2); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; cursor: pointer; transition: background 0.2s;
+}
+.modal-close:hover { background: rgba(255,255,255,0.3); }
+
+/* ===== Data Dashboard ===== */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: #fff; border-radius: 12px; padding: 20px;
+  border: 1px solid #F0F0F0;
+}
+.stat-card .stat-label { font-size: 13px; color: #999; margin-bottom: 8px; }
+.stat-card .stat-value {
+  font-size: 28px; font-weight: 800; color: #333;
+  display: flex; align-items: baseline; gap: 8px;
+}
+.stat-card .stat-change {
+  font-size: 12px; font-weight: 600; padding: 2px 8px;
+  border-radius: 10px;
+}
+.stat-up { color: #2D9F2D; background: #E8F8E8; }
+.stat-down { color: #D44A4A; background: #FEE8E8; }
+
+.chart-row {
+  display: grid; grid-template-columns: 2fr 1fr; gap: 20px;
+  margin-bottom: 20px;
+}
+.chart-card {
+  background: #fff; border-radius: 12px; padding: 20px;
+  border: 1px solid #F0F0F0;
+}
+.chart-card h3 {
+  font-size: 15px; font-weight: 700; color: #333; margin-bottom: 16px;
+}
+.chart-area {
+  height: 200px; position: relative;
+}
+.chart-svg { width: 100%; height: 100%; }
+
+/* Pie chart */
+.pie-legend {
+  display: flex; flex-direction: column; gap: 8px; margin-top: 12px;
+}
+.pie-legend-item {
+  display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;
+}
+.pie-legend-item .dot {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+
+/* ===== Assets & Brand Settings ===== */
+.asset-tabs {
+  display: flex; gap: 0; margin-bottom: 20px;
+  border-bottom: 2px solid #F0F0F0;
+}
+.asset-tab {
+  padding: 10px 24px; font-size: 14px; color: #999;
+  cursor: pointer; transition: all 0.2s;
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
+}
+.asset-tab:hover { color: #666; }
+.asset-tab.active { color: #F5A623; border-bottom-color: #F5A623; font-weight: 600; }
+
+.asset-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;
+}
+.asset-item {
+  border-radius: 10px; overflow: hidden; border: 1px solid #F0F0F0;
+  cursor: pointer; transition: all 0.2s;
+}
+.asset-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+.asset-item .asset-thumb {
+  height: 100px; display: flex; align-items: center; justify-content: center;
+  font-size: 32px;
+}
+.asset-item .asset-name {
+  padding: 8px 10px; font-size: 12px; color: #666;
+  background: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.asset-bg-1 { background: linear-gradient(135deg, #FFF8E8, #FFE4A0); }
+.asset-bg-2 { background: linear-gradient(135deg, #E8F0FF, #B8D4FF); }
+.asset-bg-3 { background: linear-gradient(135deg, #E8F8E8, #B8E8B8); }
+.asset-bg-4 { background: linear-gradient(135deg, #F3E8FF, #D4B8FF); }
+.asset-bg-5 { background: linear-gradient(135deg, #FEE8E8, #FFB8B8); }
+
+.brand-form {
+  max-width: 640px;
+}
+.form-group { margin-bottom: 20px; }
+.form-group label {
+  display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 8px;
+}
+.form-group input, .form-group textarea {
+  width: 100%; padding: 10px 14px; border: 1px solid #E0E0E0;
+  border-radius: 10px; font-size: 14px; color: #333;
+}
+.form-group input:focus, .form-group textarea:focus { outline: none; border-color: #F5A623; }
+.color-swatches {
+  display: flex; gap: 10px;
+}
+.color-swatch {
+  width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
+  border: 2px solid transparent; transition: all 0.2s;
+}
+.color-swatch.selected { border-color: #333; transform: scale(1.1); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: #333; color: #fff; padding: 12px 28px; border-radius: 10px;
+  font-size: 14px; z-index: 300; opacity: 0; transition: all 0.35s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Top Navigation -->
+<nav class="top-nav">
+  <div class="nav-left">
+    <div class="nav-logo">
+      <div class="logo-icon">AI</div>
+      <span>AI品牌内容创作中心</span>
+    </div>
+    <div class="nav-brand">
+      <span>🏢</span> 贵州中烟
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="nav-notification" title="通知">
+      🔔 <span class="badge"></span>
+    </div>
+    <div class="nav-avatar" title="用户">张</div>
+  </div>
+</nav>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-menu">
+    <div class="sidebar-item active" data-page="home">
+      <span class="icon">📝</span> 内容创作
+    </div>
+    <div class="sidebar-item" data-page="marketing">
+      <span class="icon">🎯</span> 互动营销
+    </div>
+    <div class="sidebar-item" data-page="dashboard">
+      <span class="icon">📊</span> 数据看板
+    </div>
+    <div class="sidebar-item" data-page="assets">
+      <span class="icon">📁</span> 素材库
+    </div>
+    <div class="sidebar-item" data-page="settings">
+      <span class="icon">⚙️</span> 品牌设置
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    v3.0.0 · AI品牌内容创作中心
+  </div>
+</aside>
+
+<!-- Main Content Area -->
+<main class="main-content">
+
+<!-- ==================== PAGE: HOME ==================== -->
+<div id="page-home" class="page active fade-in">
+
+  <!-- Hot Topics Banner -->
+  <div class="hot-topics-banner">
+    <div class="hot-topics-header">
+      <h2>🔥 今日热点</h2>
+      <button class="refresh-btn">🔄 刷新热点</button>
+    </div>
+    <div class="hot-topics-grid">
+      <div class="hot-topic-card" onclick="startCreation('春日主题')">
+        <div class="topic-name">🌸 春日主题</div>
+        <div class="topic-meta">
+          <div class="heat">
+            <div class="heat-bar"><div class="heat-bar-fill" style="width:92%"></div></div>
+            9.2
+          </div>
+          <span class="topic-tag">季节</span>
+        </div>
+      </div>
+      <div class="hot-topic-card" onclick="startCreation('315消费者权益日')">
+        <div class="topic-name">🛡️ 315消费者权益日</div>
+        <div class="topic-meta">
+          <div class="heat">
+            <div class="heat-bar"><div class="heat-bar-fill" style="width:88%"></div></div>
+            8.8
+          </div>
+          <span class="topic-tag">节日</span>
+        </div>
+      </div>
+      <div class="hot-topic-card" onclick="startCreation('两会热点')">
+        <div class="topic-name">🏛️ 两会热点</div>
+        <div class="topic-meta">
+          <div class="heat">
+            <div class="heat-bar"><div class="heat-bar-fill" style="width:85%"></div></div>
+            8.5
+          </div>
+          <span class="topic-tag">时政</span>
+        </div>
+      </div>
+      <div class="hot-topic-card" onclick="startCreation('非遗文化')">
+        <div class="topic-name">🎭 非遗文化</div>
+        <div class="topic-meta">
+          <div class="heat">
+            <div class="heat-bar"><div class="heat-bar-fill" style="width:78%"></div></div>
+            7.8
+          </div>
+          <span class="topic-tag">文化</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Create -->
+  <div class="section-title"><div class="title-bar"></div> 快速创建</div>
+  <div class="quick-create-grid">
+    <div class="quick-create-card" onclick="startCreation('春日主题')">
+      <span class="qc-icon">🔥</span>
+      <div class="qc-title">热点追踪</div>
+      <div class="qc-desc">结合当下热点话题，快速生成品牌相关内容</div>
+      <div class="qc-arrow">开始创作 →</div>
+    </div>
+    <div class="quick-create-card" onclick="startCreation('栏目更新')">
+      <span class="qc-icon">📋</span>
+      <div class="qc-title">栏目更新</div>
+      <div class="qc-desc">基于固定栏目模板，生成新一期内容</div>
+      <div class="qc-arrow">开始创作 →</div>
+    </div>
+    <div class="quick-create-card" onclick="navigateTo('poster-clone')">
+      <span class="qc-icon">🎨</span>
+      <div class="qc-title">海报做同款</div>
+      <div class="qc-desc">上传参考海报，一键生成区域定制版本</div>
+      <div class="qc-arrow">开始创作 →</div>
+    </div>
+  </div>
+
+  <!-- Recent Content -->
+  <div class="section-title"><div class="title-bar"></div> 最近内容</div>
+  <div class="recent-grid">
+    <div class="recent-card">
+      <div class="thumb" style="background:linear-gradient(135deg,#FFF8E8,#FFE4A0)">
+        🎬
+        <span class="status-badge status-published">已发布</span>
+      </div>
+      <div class="recent-info">
+        <div class="recent-title">贵烟·春日限定系列</div>
+        <div class="recent-meta">短视频 · 2026-02-24</div>
+      </div>
+    </div>
+    <div class="recent-card">
+      <div class="thumb" style="background:linear-gradient(135deg,#E8F0FF,#B8D4FF)">
+        📄
+        <span class="status-badge status-published">已发布</span>
+      </div>
+      <div class="recent-info">
+        <div class="recent-title">匠心传承·品质之选</div>
+        <div class="recent-meta">图文 · 2026-02-22</div>
+      </div>
+    </div>
+    <div class="recent-card">
+      <div class="thumb" style="background:linear-gradient(135deg,#E8F8E8,#B8E8B8)">
+        🖼️
+        <span class="status-badge status-draft">草稿</span>
+      </div>
+      <div class="recent-info">
+        <div class="recent-title">元宵节海报设计</div>
+        <div class="recent-meta">海报 · 2026-02-20</div>
+      </div>
+    </div>
+    <div class="recent-card">
+      <div class="thumb" style="background:linear-gradient(135deg,#F3E8FF,#D4B8FF)">
+        🎬
+        <span class="status-badge status-generating">生成中</span>
+      </div>
+      <div class="recent-info">
+        <div class="recent-title">二十四节气·雨水篇</div>
+        <div class="recent-meta">短视频 · 2026-02-19</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PAGE: CREATION FLOW ==================== -->
+<div id="page-creation" class="page">
+
+  <div class="creation-header">
+    <button class="back-btn" onclick="navigateTo('home')">←</button>
+    <h2 id="creation-title">热点追踪 · 内容创作</h2>
+  </div>
+
+  <!-- Steps Bar: 5 Steps -->
+  <div class="steps-bar">
+    <div class="step-item active" id="step-ind-1">
+      <div class="step-num">1</div>
+      <span class="step-label">选择方向</span>
+    </div>
+    <div class="step-connector" id="step-conn-1"></div>
+    <div class="step-item" id="step-ind-2">
+      <div class="step-num">2</div>
+      <span class="step-label">AI生成创意</span>
+    </div>
+    <div class="step-connector" id="step-conn-2"></div>
+    <div class="step-item" id="step-ind-3">
+      <div class="step-num">3</div>
+      <span class="step-label">行业知识匹配</span>
+    </div>
+    <div class="step-connector" id="step-conn-3"></div>
+    <div class="step-item" id="step-ind-4">
+      <div class="step-num">🛡️</div>
+      <span class="step-label">合规审查</span>
+    </div>
+    <div class="step-connector" id="step-conn-4"></div>
+    <div class="step-item" id="step-ind-5">
+      <div class="step-num">5</div>
+      <span class="step-label">预览与导出</span>
+    </div>
+  </div>
+
+  <!-- Step 1: Choose Direction -->
+  <div id="creation-step-1" class="creation-step">
+    <div class="direction-section">
+      <div class="direction-label">选择热点话题</div>
+      <div class="topic-select-grid">
+        <div class="topic-select-card selected" data-topic="春日主题" onclick="selectTopic(this)">
+          <span class="ts-icon">🌸</span>
+          <div>
+            <div class="ts-name">春日主题</div>
+            <div class="ts-heat">热度 9.2</div>
+          </div>
+        </div>
+        <div class="topic-select-card" data-topic="315消费者权益日" onclick="selectTopic(this)">
+          <span class="ts-icon">🛡️</span>
+          <div>
+            <div class="ts-name">315消费者权益日</div>
+            <div class="ts-heat">热度 8.8</div>
+          </div>
+        </div>
+        <div class="topic-select-card" data-topic="两会热点" onclick="selectTopic(this)">
+          <span class="ts-icon">🏛️</span>
+          <div>
+            <div class="ts-name">两会热点</div>
+            <div class="ts-heat">热度 8.5</div>
+          </div>
+        </div>
+        <div class="topic-select-card" data-topic="非遗文化" onclick="selectTopic(this)">
+          <span class="ts-icon">🎭</span>
+          <div>
+            <div class="ts-name">非遗文化</div>
+            <div class="ts-heat">热度 7.8</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="direction-section">
+      <div class="direction-label">内容形式</div>
+      <div class="format-options">
+        <div class="option-chip selected" onclick="selectChip(this, '.format-options')">短视频</div>
+        <div class="option-chip" onclick="selectChip(this, '.format-options')">图文</div>
+        <div class="option-chip" onclick="selectChip(this, '.format-options')">海报</div>
+      </div>
+    </div>
+
+    <div class="direction-section">
+      <div class="direction-label">发布平台</div>
+      <div class="platform-options">
+        <div class="option-chip selected" onclick="selectChip(this, '.platform-options')">视频号</div>
+        <div class="option-chip" onclick="selectChip(this, '.platform-options')">小红书</div>
+        <div class="option-chip" onclick="selectChip(this, '.platform-options')">公众号</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="goToStep(2)">开始创作</button>
+  </div>
+
+  <!-- Step 2: AI Generate Ideas -->
+  <div id="creation-step-2" class="creation-step" style="display:none">
+    <!-- Loading state -->
+    <div id="ideas-loading" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">AI正在为您生成创意方案<span class="loading-dots"></span></div>
+    </div>
+    <!-- Ideas grid (hidden initially) -->
+    <div id="ideas-content" style="display:none">
+      <div class="ideas-grid" id="ideas-grid">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Industry Knowledge Matching (auto-advance) -->
+  <div id="creation-step-3" class="creation-step" style="display:none">
+    <div class="auto-step-screen">
+      <div class="step-icon">📚</div>
+      <div class="step-title">行业知识匹配</div>
+      <div class="step-desc">正在匹配行业知识库<span class="loading-dots"></span></div>
+      <div class="loading-spinner"></div>
+      <div class="check-list" id="step3-checks">
+        <div class="check-item">✅ 已加载烟草行业知识库</div>
+        <div class="check-item">✅ 已匹配品牌调性关键词</div>
+        <div class="check-item">✅ 已加载内容禁区词库</div>
+        <div class="check-item">✅ 已匹配推荐创作元素</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: Compliance Review (auto-advance) -->
+  <div id="creation-step-4" class="creation-step" style="display:none">
+    <div class="auto-step-screen">
+      <div class="step-icon">🛡️</div>
+      <div class="step-title">合规审查</div>
+      <div class="step-desc">合规审查引擎检查中<span class="loading-dots"></span></div>
+      <div class="loading-spinner"></div>
+      <div class="check-list" id="step4-checks">
+        <div class="check-item pass">✅ 烟草广告法合规检查 — 通过</div>
+        <div class="check-item pass">✅ 品牌调性一致性检查 — 通过</div>
+        <div class="check-item pass">✅ 敏感词检测 — 已过滤0个敏感词</div>
+        <div class="check-item pass">✅ 未成年人保护条款 — 通过</div>
+        <div class="check-item pass">✅ 合规审查全部通过</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 5: Preview & Export — 3-column layout -->
+  <div id="creation-step-5" class="creation-step" style="display:none">
+    <div class="preview-3col">
+
+      <!-- LEFT COLUMN: AI Chat Panel -->
+      <div class="ai-chat-panel">
+        <div class="ai-chat-header">
+          <div class="ai-avatar">🤖</div>
+          <div>
+            <div class="ai-name">AI 内容策划师</div>
+            <div class="ai-status">在线 · 实时协作</div>
+          </div>
+        </div>
+        <div class="ai-chat-messages" id="ai-messages">
+          <div class="ai-msg success-msg"><span class="msg-icon">✅</span> 已分析热点话题「春日茶山」</div>
+          <div class="ai-msg success-msg"><span class="msg-icon">✅</span> 已匹配品牌调性：贵州中烟 · 匠心传承</div>
+          <div class="ai-msg success-msg"><span class="msg-icon">✅</span> 已生成脚本初稿（6个镜头）</div>
+          <div class="ai-msg warn-msg"><span class="msg-icon">⚠️</span> 【合规审查中】正在检查烟草行业内容规范...</div>
+          <div class="ai-msg success-msg"><span class="msg-icon">✅</span> 合规审查通过，无敏感内容</div>
+          <div class="ai-msg progress-msg"><span class="msg-icon">🎬</span> 正在生成视频画面...（第3/6镜头）</div>
+        </div>
+        <div class="ai-chat-input">
+          <input type="text" placeholder="输入修改意见，AI 将重新调整">
+          <div class="ai-quick-btns">
+            <button class="ai-quick-btn" onclick="showToast('正在打开品牌素材库...')">品牌素材库</button>
+            <button class="ai-quick-btn" onclick="showToast('正在加载历史项目...')">历史项目</button>
+            <button class="ai-quick-btn" onclick="showToast('正在打开模版中心...')">模版中心</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MIDDLE COLUMN: Video Preview + Storyboard -->
+      <div class="preview-center">
+        <div class="video-preview-large">
+          <div class="play-btn">▶</div>
+          <div class="gen-status">
+            <div class="gen-spinner"></div>
+            <span class="gen-text">AI视频生成中，预计需要3分钟...</span>
+          </div>
+        </div>
+
+        <!-- Storyboard Strip -->
+        <div style="margin-bottom:8px;font-size:13px;font-weight:600;color:#555">分镜脚本</div>
+        <div class="storyboard-strip" id="storyboard-strip">
+          <div class="storyboard-item active" onclick="selectShot(this, 0)">
+            <div class="storyboard-thumb sb-grad-1">
+              <span class="shot-num">镜头1</span>
+              🏔️
+            </div>
+            <div class="storyboard-label">航拍春日茶山全景</div>
+          </div>
+          <div class="storyboard-item" onclick="selectShot(this, 1)">
+            <div class="storyboard-thumb sb-grad-2">
+              <span class="shot-num">镜头2</span>
+              🍃
+            </div>
+            <div class="storyboard-label">茶农采茶特写</div>
+          </div>
+          <div class="storyboard-item" onclick="selectShot(this, 2)">
+            <div class="storyboard-thumb sb-grad-3">
+              <span class="shot-num">镜头3</span>
+              🔧
+            </div>
+            <div class="storyboard-label">茶叶加工工艺</div>
+          </div>
+          <div class="storyboard-item" onclick="selectShot(this, 3)">
+            <div class="storyboard-thumb sb-grad-4">
+              <span class="shot-num">镜头4</span>
+              📦
+            </div>
+            <div class="storyboard-label">品牌产品展示</div>
+          </div>
+          <div class="storyboard-item" onclick="selectShot(this, 4)">
+            <div class="storyboard-thumb sb-grad-5">
+              <span class="shot-num">镜头5</span>
+              💛
+            </div>
+            <div class="storyboard-label">人文情感画面</div>
+          </div>
+          <div class="storyboard-item" onclick="selectShot(this, 5)">
+            <div class="storyboard-thumb sb-grad-6">
+              <span class="shot-num">镜头6</span>
+              🏷️
+            </div>
+            <div class="storyboard-label">品牌logo收尾</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Config Panel -->
+      <div class="config-right-panel">
+
+        <!-- Industry Knowledge Card -->
+        <div class="knowledge-card">
+          <div class="kc-title">🏭 行业知识 · 烟草</div>
+          <div class="kc-row">
+            <div class="kc-label">品牌调性</div>
+            <div class="kc-pills">
+              <span class="kc-pill yellow">匠心</span>
+              <span class="kc-pill yellow">传承</span>
+              <span class="kc-pill yellow">品质</span>
+            </div>
+          </div>
+          <div class="kc-row">
+            <div class="kc-label">内容禁区</div>
+            <div class="kc-pills">
+              <span class="kc-pill red">❌ 折耳根</span>
+              <span class="kc-pill red">❌ 送穷</span>
+              <span class="kc-pill red">❌ 未成年人</span>
+            </div>
+          </div>
+          <div class="kc-row">
+            <div class="kc-label">推荐元素</div>
+            <div class="kc-pills">
+              <span class="kc-pill green">茶山</span>
+              <span class="kc-pill green">非遗工艺</span>
+              <span class="kc-pill green">节气文化</span>
+            </div>
+          </div>
+          <div class="kc-row" style="margin-bottom:0">
+            <div class="kc-label">合规要求</div>
+            <div class="kc-requirement">不得出现吸烟画面、不得暗示健康无害</div>
+          </div>
+        </div>
+
+        <!-- Compliance Status Card -->
+        <div class="compliance-card pass" id="compliance-card">
+          <div class="cc-title">✅ 合规审查</div>
+          <div class="cc-item" id="cc-item-1">烟草广告法合规 ✓</div>
+          <div class="cc-item" id="cc-item-2">品牌调性一致性 ✓</div>
+          <div class="cc-item" id="cc-item-3">敏感词检测 ✓（已过滤0个敏感词）</div>
+          <div class="cc-reviewer" id="cc-reviewer">审核人：AI 合规引擎 v2.1</div>
+          <button class="toggle-compliance" id="toggle-compliance-btn" onclick="toggleCompliance()">模拟违规</button>
+        </div>
+
+        <!-- Script -->
+        <div class="rp-section">
+          <label>脚本文案</label>
+          <textarea>【开场】航拍贵州春日茶山，云雾缭绕，嫩绿茶芽在晨光中舒展。
+
+【旁白】春风拂过黔山，唤醒了沉睡一冬的茶芽。在这片土地上，茶与烟，共享着同一片阳光雨露。
+
+【转场】镜头推进至茶农采茶的特写，手指轻捻嫩芽。
+
+【旁白】一叶一芽，皆是匠心。正如贵烟的每一道工序，都凝聚着对品质的执着追求。
+
+【画面】贵烟产品特写，烟叶纹理与茶叶纹理交替呈现。
+
+【旁白】春茶与春烟，不同的叶片，相同的匠心传承。
+
+【结尾】品牌Logo + slogan，背景为春日茶山远景。</textarea>
+        </div>
+
+        <!-- Music -->
+        <div class="rp-section">
+          <label>背景音乐</label>
+          <select>
+            <option>轻柔古风 - 春江花月夜（改编）</option>
+            <option>现代轻音乐 - 春日漫步</option>
+            <option>自然白噪音 - 山间鸟鸣</option>
+            <option>无背景音乐</option>
+          </select>
+        </div>
+
+        <!-- Cover Style -->
+        <div class="rp-section">
+          <label>封面风格</label>
+          <div class="cover-options">
+            <div class="cover-option selected cover-style-1" onclick="selectCover(this)">
+              <div class="cover-thumb">🌿</div>
+            </div>
+            <div class="cover-option cover-style-2" onclick="selectCover(this)">
+              <div class="cover-thumb">🏔️</div>
+            </div>
+            <div class="cover-option cover-style-3" onclick="selectCover(this)">
+              <div class="cover-thumb">🎨</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subtitle Style -->
+        <div class="rp-section">
+          <label>字幕样式</label>
+          <select>
+            <option>经典白色描边</option>
+            <option>底部黑色半透明条</option>
+            <option>无字幕</option>
+          </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="preview-actions-bottom">
+          <button class="btn-secondary" onclick="goToStep(2)" style="flex:1">重新生成</button>
+          <button class="btn-primary" onclick="showToast('内容已导出到素材库')" style="flex:1">确认并导出</button>
+        </div>
+      </div>
+
+    </div><!-- end preview-3col -->
+  </div><!-- end step 5 -->
+
+</div><!-- end page-creation -->
+
+<!-- ==================== PAGE: INTERACTIVE MARKETING ==================== -->
+<div id="page-marketing" class="page">
+
+  <!-- Campaign Templates View -->
+  <div id="marketing-templates">
+    <div class="section-title"><div class="title-bar"></div> 互动营销活动模板</div>
+    <p style="font-size:13px;color:#999;margin:-8px 0 20px;">选择一个模板，快速创建品牌互动营销活动</p>
+    <div class="campaign-grid">
+      <div class="campaign-card" onclick="openCampaignConfig()">
+        <span class="camp-icon">📸</span>
+        <div class="camp-title">AI做同款</div>
+        <div class="camp-desc">用户上传照片，AI生成主题风格照片，趣味互动引爆传播</div>
+        <div class="camp-btn">创建活动 →</div>
+      </div>
+      <div class="campaign-card" onclick="showToast('即将上线，敬请期待')">
+        <span class="camp-icon">🗳️</span>
+        <div class="camp-title">AI投票PK</div>
+        <div class="camp-desc">发起AI生成的趣味投票，用户参与PK互动，提升品牌曝光</div>
+        <div class="camp-btn">创建活动 →</div>
+      </div>
+      <div class="campaign-card" onclick="showToast('即将上线，敬请期待')">
+        <span class="camp-icon">🃏</span>
+        <div class="camp-title">AI集卡</div>
+        <div class="camp-desc">AI生成系列主题卡牌，用户收集兑换奖品，持续活跃互动</div>
+        <div class="camp-btn">创建活动 →</div>
+      </div>
+      <div class="campaign-card" onclick="showToast('即将上线，敬请期待')">
+        <span class="camp-icon">🎁</span>
+        <div class="camp-title">AI红包封面</div>
+        <div class="camp-desc">AI生成品牌定制红包封面，节日营销利器，社交裂变传播</div>
+        <div class="camp-btn">创建活动 →</div>
+      </div>
+      <div class="campaign-card" onclick="showToast('即将上线，敬请期待')">
+        <span class="camp-icon">🎨</span>
+        <div class="camp-title">AI共创</div>
+        <div class="camp-desc">用户输入关键词，AI生成品牌联名作品，UGC内容共创</div>
+        <div class="camp-btn">创建活动 →</div>
+      </div>
+      <div class="campaign-card" onclick="showToast('即将上线，敬请期待')">
+        <span class="camp-icon">📖</span>
+        <div class="camp-title">AI互动漫剧</div>
+        <div class="camp-desc">用户选择角色和剧情走向，沉浸式品牌故事体验</div>
+        <div class="camp-btn">创建活动 →</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campaign Config View -->
+  <div id="marketing-config" style="display:none">
+    <div class="creation-header">
+      <button class="back-btn" onclick="backToTemplates()">←</button>
+      <h2>📸 AI做同款 · 活动配置</h2>
+    </div>
+
+    <div class="config-section">
+      <h3>📝 基本信息</h3>
+      <div style="margin-bottom:14px">
+        <label style="font-size:13px;font-weight:600;color:#555;margin-bottom:6px;display:block">活动名称</label>
+        <input class="config-input" type="text" value="贵烟·春日国风照" placeholder="输入活动名称">
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#555;margin-bottom:6px;display:block">活动说明</label>
+        <input class="config-input" type="text" value="上传你的照片，AI为你生成国风春日主题写真" placeholder="输入活动说明">
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h3>🎨 主题风格</h3>
+      <div class="theme-grid">
+        <div class="theme-card selected" onclick="selectTheme(this)">
+          <div class="theme-thumb theme-ink">🏔️</div>
+          <div class="theme-name">国风水墨</div>
+        </div>
+        <div class="theme-card" onclick="selectTheme(this)">
+          <div class="theme-thumb theme-cyber" style="color:#0ff">⚡</div>
+          <div class="theme-name">赛博朋克</div>
+        </div>
+        <div class="theme-card" onclick="selectTheme(this)">
+          <div class="theme-thumb theme-oil">🎨</div>
+          <div class="theme-name">油画风</div>
+        </div>
+        <div class="theme-card" onclick="selectTheme(this)">
+          <div class="theme-thumb theme-comic">✨</div>
+          <div class="theme-name">漫画风</div>
+        </div>
+        <div class="theme-card" onclick="selectTheme(this)">
+          <div class="theme-thumb theme-retro">📷</div>
+          <div class="theme-name">复古胶片</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h3>📅 活动时间</h3>
+      <div class="date-row">
+        <input type="date" value="2026-03-01">
+        <span>至</span>
+        <input type="date" value="2026-03-31">
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h3>🎁 奖励设置</h3>
+      <div class="reward-grid">
+        <div class="reward-item">
+          <div class="reward-label">参与奖</div>
+          <div class="reward-value">品牌电子优惠券</div>
+        </div>
+        <div class="reward-item">
+          <div class="reward-label">分享奖</div>
+          <div class="reward-value">额外抽奖机会 ×1</div>
+        </div>
+        <div class="reward-item">
+          <div class="reward-label">排行榜奖</div>
+          <div class="reward-value">限量周边礼盒</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h3>🏷️ 品牌露出</h3>
+      <div style="display:flex;gap:20px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <label style="font-size:13px;font-weight:600;color:#555;margin-bottom:6px;display:block">Logo位置</label>
+          <select class="config-input" style="appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 12 12%27%3E%3Cpath fill=%27%23999%27 d=%27M6 8L1 3h10z%27/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 14px center">
+            <option>右下角</option>
+            <option>左下角</option>
+            <option>顶部居中</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <label style="font-size:13px;font-weight:600;color:#555;margin-bottom:6px;display:block">品牌主色</label>
+          <div class="color-swatches">
+            <div class="color-swatch selected" style="background:#F5A623" onclick="selectSwatch(this)"></div>
+            <div class="color-swatch" style="background:#D4890A" onclick="selectSwatch(this)"></div>
+            <div class="color-swatch" style="background:#8B6914" onclick="selectSwatch(this)"></div>
+            <div class="color-swatch" style="background:#2D9F2D" onclick="selectSwatch(this)"></div>
+            <div class="color-swatch" style="background:#4A7FD4" onclick="selectSwatch(this)"></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <label style="font-size:13px;font-weight:600;color:#555;margin-bottom:6px;display:block">底部信息</label>
+        <input class="config-input" type="text" value="贵州中烟工业有限责任公司 · 吸烟有害健康">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:8px">
+      <button class="btn-secondary" onclick="openPhonePreview()">预览活动页</button>
+      <button class="btn-primary" onclick="showToast('活动已发布成功！')">一键发布</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PAGE: DATA DASHBOARD ==================== -->
+<div id="page-dashboard" class="page">
+  <div class="section-title"><div class="title-bar"></div> 数据看板</div>
+  <p style="font-size:13px;color:#999;margin:-8px 0 20px;">数据更新时间：2026-02-26 09:30</p>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">本月内容产出</div>
+      <div class="stat-value">12 <span class="stat-change stat-up">↑ 33%</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">互动活动参与人次</div>
+      <div class="stat-value">8,542 <span class="stat-change stat-up">↑ 128%</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">视频总播放量</div>
+      <div class="stat-value">125K <span class="stat-change stat-up">↑ 67%</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">平均互动率</div>
+      <div class="stat-value">4.8% <span class="stat-change stat-down">↓ 0.3%</span></div>
+    </div>
+  </div>
+
+  <div class="chart-row">
+    <div class="chart-card">
+      <h3>📈 内容播放量趋势（近30天）</h3>
+      <div class="chart-area">
+        <svg class="chart-svg" viewBox="0 0 600 200" preserveAspectRatio="none">
+          <!-- Grid lines -->
+          <line x1="0" y1="50" x2="600" y2="50" stroke="#F0F0F0" stroke-width="1"/>
+          <line x1="0" y1="100" x2="600" y2="100" stroke="#F0F0F0" stroke-width="1"/>
+          <line x1="0" y1="150" x2="600" y2="150" stroke="#F0F0F0" stroke-width="1"/>
+          <!-- Area fill -->
+          <path d="M0,180 L20,170 L40,165 L60,160 L80,155 L100,140 L120,145 L140,130 L160,120 L180,110 L200,100 L220,95 L240,105 L260,90 L280,80 L300,75 L320,85 L340,70 L360,60 L380,65 L400,50 L420,55 L440,45 L460,40 L480,35 L500,30 L520,38 L540,25 L560,20 L580,22 L600,15 L600,200 L0,200 Z" fill="url(#chartGrad)" opacity="0.3"/>
+          <!-- Line -->
+          <path d="M0,180 L20,170 L40,165 L60,160 L80,155 L100,140 L120,145 L140,130 L160,120 L180,110 L200,100 L220,95 L240,105 L260,90 L280,80 L300,75 L320,85 L340,70 L360,60 L380,65 L400,50 L420,55 L440,45 L460,40 L480,35 L500,30 L520,38 L540,25 L560,20 L580,22 L600,15" fill="none" stroke="#F5A623" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Dots on key points -->
+          <circle cx="300" cy="75" r="4" fill="#F5A623"/>
+          <circle cx="460" cy="40" r="4" fill="#F5A623"/>
+          <circle cx="600" cy="15" r="4" fill="#F5A623"/>
+          <defs>
+            <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#F5A623"/>
+              <stop offset="100%" stop-color="#F5A623" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#BBB;margin-top:8px">
+        <span>1月28日</span><span>2月5日</span><span>2月12日</span><span>2月19日</span><span>2月26日</span>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>📊 内容类型分布</h3>
+      <div style="display:flex;align-items:center;justify-content:center;padding:10px 0">
+        <svg width="160" height="160" viewBox="0 0 160 160">
+          <!-- Pie slices -->
+          <circle cx="80" cy="80" r="60" fill="none" stroke="#F5A623" stroke-width="30" stroke-dasharray="188.5 188.5" stroke-dashoffset="0" transform="rotate(-90 80 80)"/>
+          <circle cx="80" cy="80" r="60" fill="none" stroke="#FFBD2E" stroke-width="30" stroke-dasharray="113.1 263.9" stroke-dashoffset="-188.5" transform="rotate(-90 80 80)"/>
+          <circle cx="80" cy="80" r="60" fill="none" stroke="#FFE4A0" stroke-width="30" stroke-dasharray="75.4 301.6" stroke-dashoffset="-301.6" transform="rotate(-90 80 80)"/>
+          <!-- Center circle -->
+          <circle cx="80" cy="80" r="45" fill="#fff"/>
+          <text x="80" y="76" text-anchor="middle" font-size="18" font-weight="800" fill="#333">12</text>
+          <text x="80" y="92" text-anchor="middle" font-size="11" fill="#999">总内容</text>
+        </svg>
+      </div>
+      <div class="pie-legend">
+        <div class="pie-legend-item"><div class="dot" style="background:#F5A623"></div> 短视频 · 6条 (50%)</div>
+        <div class="pie-legend-item"><div class="dot" style="background:#FFBD2E"></div> 图文 · 3条 (25%)</div>
+        <div class="pie-legend-item"><div class="dot" style="background:#FFE4A0"></div> 海报 · 3条 (25%)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-row">
+    <div class="chart-card">
+      <h3>🎯 互动活动数据</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px">
+        <div style="text-align:center;padding:16px;background:#FFF8E8;border-radius:10px">
+          <div style="font-size:24px;font-weight:800;color:#F5A623">3</div>
+          <div style="font-size:12px;color:#999;margin-top:4px">进行中活动</div>
+        </div>
+        <div style="text-align:center;padding:16px;background:#E8F8E8;border-radius:10px">
+          <div style="font-size:24px;font-weight:800;color:#2D9F2D">2,847</div>
+          <div style="font-size:12px;color:#999;margin-top:4px">今日参与</div>
+        </div>
+        <div style="text-align:center;padding:16px;background:#E8F0FF;border-radius:10px">
+          <div style="font-size:24px;font-weight:800;color:#4A7FD4">1,234</div>
+          <div style="font-size:12px;color:#999;margin-top:4px">今日分享</div>
+        </div>
+      </div>
+      <!-- Bar chart -->
+      <div style="margin-top:20px">
+        <div style="font-size:13px;color:#666;margin-bottom:12px">各活动参与排行</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:12px;color:#666;width:120px;flex-shrink:0">春日国风照</span>
+            <div style="flex:1;height:20px;background:#F5F5F5;border-radius:10px;overflow:hidden">
+              <div style="width:85%;height:100%;background:linear-gradient(90deg,#F5A623,#FFBD2E);border-radius:10px"></div>
+            </div>
+            <span style="font-size:12px;font-weight:600;color:#333;width:50px;text-align:right">4,231</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:12px;color:#666;width:120px;flex-shrink:0">新年红包封面</span>
+            <div style="flex:1;height:20px;background:#F5F5F5;border-radius:10px;overflow:hidden">
+              <div style="width:62%;height:100%;background:linear-gradient(90deg,#FFBD2E,#FFE4A0);border-radius:10px"></div>
+            </div>
+            <span style="font-size:12px;font-weight:600;color:#333;width:50px;text-align:right">3,108</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:12px;color:#666;width:120px;flex-shrink:0">品牌AI共创</span>
+            <div style="flex:1;height:20px;background:#F5F5F5;border-radius:10px;overflow:hidden">
+              <div style="width:24%;height:100%;background:linear-gradient(90deg,#FFE4A0,#FFF3D6);border-radius:10px"></div>
+            </div>
+            <span style="font-size:12px;font-weight:600;color:#333;width:50px;text-align:right">1,203</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>📱 平台分布</h3>
+      <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px">
+        <div style="padding:14px;background:#FFF8E8;border-radius:10px;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:#333">视频号</div>
+            <div style="font-size:11px;color:#999;margin-top:2px">5条内容</div>
+          </div>
+          <div style="font-size:18px;font-weight:800;color:#F5A623">68K</div>
+        </div>
+        <div style="padding:14px;background:#FEE8E8;border-radius:10px;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:#333">小红书</div>
+            <div style="font-size:11px;color:#999;margin-top:2px">4条内容</div>
+          </div>
+          <div style="font-size:18px;font-weight:800;color:#D44A4A">42K</div>
+        </div>
+        <div style="padding:14px;background:#E8F8E8;border-radius:10px;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:#333">公众号</div>
+            <div style="font-size:11px;color:#999;margin-top:2px">3条内容</div>
+          </div>
+          <div style="font-size:18px;font-weight:800;color:#2D9F2D">15K</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PAGE: ASSETS ==================== -->
+<div id="page-assets" class="page">
+  <div class="section-title"><div class="title-bar"></div> 素材库</div>
+
+  <div class="asset-tabs">
+    <div class="asset-tab active" onclick="switchAssetTab(this, 'all')">全部素材</div>
+    <div class="asset-tab" onclick="switchAssetTab(this, 'video')">视频</div>
+    <div class="asset-tab" onclick="switchAssetTab(this, 'image')">图片</div>
+    <div class="asset-tab" onclick="switchAssetTab(this, 'audio')">音频</div>
+    <div class="asset-tab" onclick="switchAssetTab(this, 'template')">模板</div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="font-size:13px;color:#999">共 18 个素材</div>
+    <button class="btn-primary" style="padding:8px 20px;font-size:13px" onclick="showToast('上传功能开发中')">上传素材</button>
+  </div>
+
+  <div class="asset-grid">
+    <div class="asset-item">
+      <div class="asset-thumb asset-bg-1">🎬</div>
+      <div class="asset-name">春日限定系列_v3.mp4</div>
+    </div>
+    <div class="asset-item">
+      <div class="asset-thumb asset-bg-2">🎬</div>
+      <div class="asset-name">匠心传承_final.mp4</div>
+    </div>
+    <div class="asset-item">
+      <div class="asset-thumb asset-bg-3">🖼️</div>
+      <div class="asset-name">品牌主视觉_2026.png</div>
+    </div>
+    <div class="asset-item">
+      <div class="asset-thumb asset-bg-4">🖼️</div>
+      <div class="asset-name">春日海报_横版.jpg</div>
+    </div>
+    <div class="asset-item">
+      <div class="asset-thumb asset-bg-5">🎵</div>
+      <div class="asset-name">品牌BGM_古风版.mp3</div>
+    </div>
+    <div class="asset-item">
+      <div class="asset-thumb asset-bg-1">🖼️</div>
+      <div class="asset-name">产品特写_贵烟.jpg</div>
+    </div>
+    <div class="asset-item">
+      <div class="asset-thumb asset-bg-2">🎬</div>
+      <div class="asset-name">节气系列_雨水.mp4</div>
+    </div>
+    <div class="asset-item">
+      <div class="asset-thumb asset-bg-3">🖼️</div>
+      <div class="asset-name">烟田航拍_4K.jpg</div>
+    </div>
+    <div class="asset-item">
+      <div class="asset-thumb asset-bg-4">📄</div>
+      <div class="asset-name">脚本模板_产品.docx</div>
+    </div>
+    <div class="asset-item">
+      <div class="asset-thumb asset-bg-5">🖼️</div>
+      <div class="asset-name">Logo_白底_高清.png</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PAGE: POSTER CLONE ==================== -->
+<div id="page-poster-clone" class="page">
+  <div class="creation-header">
+    <button class="back-btn" onclick="navigateTo('home')">←</button>
+    <h2>🎨 海报做同款</h2>
+  </div>
+
+  <div class="card" style="padding:28px;margin-bottom:24px">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:15px;font-weight:600;color:#333;margin-bottom:8px">上传参考海报，一键生成区域定制版</div>
+      <div style="font-size:13px;color:#999">AI 自动识别设计元素，保持风格一致，替换区域信息</div>
+    </div>
+
+    <!-- Upload Area -->
+    <div id="poster-upload-area" style="border:2px dashed #E0E0E0;border-radius:12px;padding:48px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:24px" onclick="document.getElementById('poster-file-input').click()">
+      <div style="font-size:48px;margin-bottom:12px">📤</div>
+      <div style="font-size:14px;font-weight:600;color:#333;margin-bottom:6px">点击上传参考海报</div>
+      <div style="font-size:12px;color:#999">支持 JPG、PNG 格式，建议尺寸 1080x1920</div>
+      <input type="file" id="poster-file-input" accept="image/*" style="display:none" onchange="handlePosterUpload(event)">
+    </div>
+
+    <!-- Preview Area (hidden initially) -->
+    <div id="poster-preview-area" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#555;margin-bottom:12px">📋 原始海报</div>
+          <div style="border-radius:12px;overflow:hidden;border:1px solid #E8E8E8">
+            <img id="original-poster" style="width:100%;display:block">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#555;margin-bottom:12px">✨ 生成预览</div>
+          <div id="generated-poster-container" style="border-radius:12px;overflow:hidden;border:1px solid #E8E8E8;background:#F5F5F5;aspect-ratio:9/16;display:flex;align-items:center;justify-content:center">
+            <div style="text-align:center;color:#999">
+              <div style="font-size:36px;margin-bottom:8px">⏳</div>
+              <div style="font-size:13px">等待生成...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Region Settings -->
+      <div class="config-section" style="margin-bottom:20px">
+        <h3>📍 区域信息设置</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="form-group">
+            <label>区域名称</label>
+            <input type="text" id="region-name" placeholder="例如：贵阳市" style="width:100%;padding:10px 14px;border:1px solid #E0E0E0;border-radius:10px;font-size:14px">
+          </div>
+          <div class="form-group">
+            <label>联系方式</label>
+            <input type="text" id="region-contact" placeholder="例如：400-123-4567" style="width:100%;padding:10px 14px;border:1px solid #E0E0E0;border-radius:10px;font-size:14px">
+          </div>
+          <div class="form-group">
+            <label>地址信息</label>
+            <input type="text" id="region-address" placeholder="例如：云岩区中华北路" style="width:100%;padding:10px 14px;border:1px solid #E0E0E0;border-radius:10px;font-size:14px">
+          </div>
+          <div class="form-group">
+            <label>活动时间</label>
+            <input type="text" id="region-time" placeholder="例如：3月1日-3月31日" style="width:100%;padding:10px 14px;border:1px solid #E0E0E0;border-radius:10px;font-size:14px">
+          </div>
+        </div>
+      </div>
+
+      <!-- Style Options -->
+      <div class="config-section" style="margin-bottom:20px">
+        <h3>🎨 风格选项</h3>
+        <div style="display:flex;gap:12px;margin-bottom:16px">
+          <div class="option-chip selected" onclick="selectChip(this, '#poster-style-options')">保持原风格</div>
+          <div class="option-chip" onclick="selectChip(this, '#poster-style-options')">简约现代</div>
+          <div class="option-chip" onclick="selectChip(this, '#poster-style-options')">国潮风</div>
+          <div class="option-chip" onclick="selectChip(this, '#poster-style-options')">商务专业</div>
+        </div>
+        <div style="display:flex;gap:12px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#666;cursor:pointer">
+            <input type="checkbox" id="keep-layout" checked> 保持原始布局
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#666;cursor:pointer">
+            <input type="checkbox" id="keep-colors" checked> 保持配色方案
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#666;cursor:pointer">
+            <input type="checkbox" id="auto-optimize"> 自动优化排版
+          </label>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display:flex;gap:12px;justify-content:center">
+        <button class="btn-secondary" onclick="resetPosterClone()">重新上传</button>
+        <button class="btn-primary" onclick="generatePosterClone()">🎨 生成同款海报</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generated Results -->
+  <div id="poster-results" style="display:none">
+    <div class="section-title"><div class="title-bar"></div> 生成结果</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="aspect-ratio:9/16;background:linear-gradient(135deg,#FFF8E8,#FFE4A0);display:flex;align-items:center;justify-content:center">
+          <div style="text-align:center">
+            <div style="font-size:48px;margin-bottom:8px">🎨</div>
+            <div style="font-size:14px;color:#8B6914;font-weight:600">版本 A</div>
+          </div>
+        </div>
+        <div style="padding:16px;text-align:center">
+          <button class="btn-secondary" style="width:100%;margin-bottom:8px">下载</button>
+          <button class="btn-secondary" style="width:100%">继续优化</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="aspect-ratio:9/16;background:linear-gradient(135deg,#E8F0FF,#B8D4FF);display:flex;align-items:center;justify-content:center">
+          <div style="text-align:center">
+            <div style="font-size:48px;margin-bottom:8px">🎨</div>
+            <div style="font-size:14px;color:#4A7FD4;font-weight:600">版本 B</div>
+          </div>
+        </div>
+        <div style="padding:16px;text-align:center">
+          <button class="btn-secondary" style="width:100%;margin-bottom:8px">下载</button>
+          <button class="btn-secondary" style="width:100%">继续优化</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="aspect-ratio:9/16;background:linear-gradient(135deg,#F3E8FF,#D4B8FF);display:flex;align-items:center;justify-content:center">
+          <div style="text-align:center">
+            <div style="font-size:48px;margin-bottom:8px">🎨</div>
+            <div style="font-size:14px;color:#8B4FD4;font-weight:600">版本 C</div>
+          </div>
+        </div>
+        <div style="padding:16px;text-align:center">
+          <button class="btn-secondary" style="width:100%;margin-bottom:8px">下载</button>
+          <button class="btn-secondary" style="width:100%">继续优化</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PAGE: BRAND SETTINGS ==================== -->
+<div id="page-settings" class="page">
+  <div class="section-title"><div class="title-bar"></div> 品牌设置</div>
+  <p style="font-size:13px;color:#999;margin:-8px 0 20px;">配置品牌基础信息，AI将基于这些信息生成更贴合品牌调性的内容</p>
+
+  <div class="brand-form">
+    <div class="config-section">
+      <h3>🏢 基本信息</h3>
+      <div class="form-group">
+        <label>品牌名称</label>
+        <input type="text" value="贵州中烟">
+      </div>
+      <div class="form-group">
+        <label>品牌简介</label>
+        <textarea rows="3" style="resize:vertical">贵州中烟工业有限责任公司，致力于打造高品质烟草产品，传承匠心工艺，弘扬贵州文化。</textarea>
+      </div>
+      <div class="form-group">
+        <label>品牌Slogan</label>
+        <input type="text" value="匠心传承，品质之选">
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h3>🎨 视觉规范</h3>
+      <div class="form-group">
+        <label>品牌主色调</label>
+        <div class="color-swatches">
+          <div class="color-swatch selected" style="background:#F5A623" onclick="selectSwatch(this)"></div>
+          <div class="color-swatch" style="background:#D4890A" onclick="selectSwatch(this)"></div>
+          <div class="color-swatch" style="background:#8B6914" onclick="selectSwatch(this)"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>品牌字体</label>
+        <select style="width:100%;padding:10px 14px;border:1px solid #E0E0E0;border-radius:10px;font-size:14px;color:#333">
+          <option>思源宋体</option>
+          <option>思源黑体</option>
+          <option>阿里巴巴普惠体</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h3>📝 内容规范</h3>
+      <div class="form-group">
+        <label>品牌调性关键词</label>
+        <input type="text" value="匠心、传承、品质、自然、贵州文化">
+      </div>
+      <div class="form-group">
+        <label>禁用词汇</label>
+        <textarea rows="2" style="resize:vertical">最好、第一、顶级、绝对、永远</textarea>
+      </div>
+      <div class="form-group">
+        <label>必须包含的合规声明</label>
+        <input type="text" value="吸烟有害健康">
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="showToast('品牌设置已保存')">保存设置</button>
+  </div>
+</div>
+
+</main><!-- end main-content -->
+
+<!-- ==================== PHONE PREVIEW MODAL ==================== -->
+<div class="modal-overlay" id="phone-modal" onclick="closePhonePreview(event)">
+  <div style="position:relative">
+    <div class="modal-close" onclick="closePhonePreview(event, true)">✕</div>
+    <div class="phone-frame">
+      <div class="phone-notch"></div>
+      <div class="phone-content">
+        <div style="text-align:center;margin-bottom:8px">
+          <div style="font-size:11px;color:#999;margin-bottom:4px">贵州中烟 · 品牌活动</div>
+        </div>
+        <h3>🌸 贵烟·春日国风照</h3>
+        <p class="phone-desc">上传你的照片，AI为你生成国风春日主题写真</p>
+
+        <div style="border-radius:12px;overflow:hidden;margin-bottom:16px">
+          <div style="height:160px;background:linear-gradient(135deg,#FFF8E8,#FFE4A0);display:flex;align-items:center;justify-content:center">
+            <div style="text-align:center">
+              <div style="font-size:48px;margin-bottom:8px">🏔️🌸</div>
+              <div style="font-size:12px;color:#8B6914">国风水墨 · 春日主题</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phone-upload-area">
+          <div class="upload-icon">📷</div>
+          <div class="upload-text">点击上传你的照片</div>
+        </div>
+
+        <button class="phone-btn">生成我的国风照</button>
+
+        <div style="margin-top:20px;padding:14px;background:#FFF8E8;border-radius:10px">
+          <div style="font-size:13px;font-weight:600;color:#8B6914;margin-bottom:8px">🎁 活动奖励</div>
+          <div style="font-size:12px;color:#999;line-height:1.8">
+            · 参与即得品牌电子优惠券<br>
+            · 分享活动获额外抽奖机会<br>
+            · 排行榜前10名获限量周边礼盒
+          </div>
+        </div>
+
+        <div style="margin-top:16px;text-align:center;font-size:11px;color:#CCC;line-height:1.6">
+          贵州中烟工业有限责任公司<br>吸烟有害健康
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== Ideas Data =====
+const ideasData = [
+  {
+    title: '「春茶与春烟」',
+    desc: '以春茶采摘为引，讲述匠心传承。航拍贵州茶山与烟田交织的春日画卷，展现从茶叶到烟叶的匠心工艺传承。',
+    duration: '45秒短视频',
+    tags: [{ text: '温情', cls: 'style-warm' }, { text: '匠心', cls: 'style-art' }]
+  },
+  {
+    title: '「节气·谷雨」',
+    desc: '二十四节气系列，谷雨时节的烟叶故事。雨润万物，烟叶在谷雨时节迎来最佳生长期，用诗意镜头记录这一刻。',
+    duration: '60秒短视频',
+    tags: [{ text: '知识科普', cls: 'style-knowledge' }, { text: '文化', cls: 'style-art' }]
+  },
+  {
+    title: '「春日慢时光」',
+    desc: 'ASMR风格，展示产品工艺细节。微距镜头下的烟叶纹理、制作工序的细腻声响，营造沉浸式感官体验。',
+    duration: '30秒短视频',
+    tags: [{ text: '艺术', cls: 'style-art' }, { text: '沉浸式', cls: 'style-knowledge' }]
+  },
+  {
+    title: '「春风十里烟草香」',
+    desc: '航拍贵州烟田，展现自然之美。从万亩烟田的壮阔到一株烟苗的细腻，用航拍视角展现贵州烟草的自然之美。',
+    duration: '45秒短视频',
+    tags: [{ text: '大气', cls: 'style-warm' }, { text: '自然', cls: 'style-knowledge' }]
+  },
+  {
+    title: '「老烟匠的春天」',
+    desc: '纪录片风格，讲述烟叶种植人的故事。跟随一位老烟匠的脚步，记录他与烟田相伴的第四十个春天。',
+    duration: '90秒短视频',
+    tags: [{ text: '纪录片', cls: 'style-doc' }, { text: '温情', cls: 'style-warm' }]
+  },
+  {
+    title: '「春日限定·包装故事」',
+    desc: '产品包装设计背后的春日灵感。揭秘春日限定包装的设计过程，从贵州春色中提取的色彩与纹样。',
+    duration: '40秒短视频',
+    tags: [{ text: '设计', cls: 'style-art' }, { text: '幕后', cls: 'style-knowledge' }]
+  },
+  {
+    title: '「一叶知春」',
+    desc: '微距摄影，烟叶与春芽的视觉对比。用极致微距镜头，捕捉烟叶脉络与春芽纹理的惊人相似。',
+    duration: '30秒短视频',
+    tags: [{ text: '艺术', cls: 'style-art' }, { text: '视觉', cls: 'style-knowledge' }]
+  },
+  {
+    title: '「春日茶话会」',
+    desc: '品牌跨界联名，茶+烟的文化碰撞。邀请茶艺师与制烟师对谈，探讨两种叶片背后的东方美学。',
+    duration: '60秒短视频',
+    tags: [{ text: '跨界', cls: 'style-humor' }, { text: '文化', cls: 'style-art' }]
+  },
+  {
+    title: '「贵州春色」',
+    desc: '旅行vlog风格，品牌与地域文化结合。以第一人称视角探访贵州春日美景，自然融入品牌元素。',
+    duration: '90秒短视频',
+    tags: [{ text: 'Vlog', cls: 'style-humor' }, { text: '旅行', cls: 'style-warm' }]
+  },
+  {
+    title: '「匠心·春酿」',
+    desc: '将制烟工艺比喻为春天的酿造过程。如同春酿需要时间沉淀，每一支贵烟都经历了时光的打磨与匠心的淬炼。',
+    duration: '45秒短视频',
+    tags: [{ text: '温情', cls: 'style-warm' }, { text: '匠心', cls: 'style-art' }]
+  }
+];
+
+// ===== Page Navigation =====
+function navigateTo(pageId) {
+  document.querySelectorAll('.page').forEach(function(p) {
+    p.classList.remove('active', 'fade-in');
+  });
+  var target = document.getElementById('page-' + pageId);
+  if (target) {
+    target.classList.add('active', 'fade-in');
+  }
+  document.querySelectorAll('.sidebar-item').forEach(function(item) {
+    item.classList.remove('active');
+    if (item.dataset.page === pageId) {
+      item.classList.add('active');
+    }
+  });
+}
+
+// Sidebar click handlers
+document.querySelectorAll('.sidebar-item').forEach(function(item) {
+  item.addEventListener('click', function() {
+    var page = this.dataset.page;
+    if (page === 'home') {
+      resetCreationFlow();
+    }
+    navigateTo(page);
+  });
+});
+
+// ===== Content Creation Flow =====
+var currentStep = 1;
+var totalSteps = 5;
+
+function startCreation(topic) {
+  navigateTo('creation');
+  document.querySelectorAll('.sidebar-item').forEach(function(item) {
+    item.classList.remove('active');
+    if (item.dataset.page === 'home') item.classList.add('active');
+  });
+  document.querySelectorAll('.topic-select-card').forEach(function(card) {
+    card.classList.remove('selected');
+    if (card.dataset.topic === topic) {
+      card.classList.add('selected');
+    }
+  });
+  currentStep = 1;
+  updateStepUI();
+}
+
+function selectTopic(el) {
+  document.querySelectorAll('.topic-select-card').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+}
+
+function selectChip(el, parentSelector) {
+  document.querySelectorAll(parentSelector + ' .option-chip').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+}
+
+function selectCover(el) {
+  document.querySelectorAll('.cover-option').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+}
+
+function selectShot(el, idx) {
+  document.querySelectorAll('.storyboard-item').forEach(function(c) { c.classList.remove('active'); });
+  el.classList.add('active');
+}
+
+function goToStep(step) {
+  currentStep = step;
+  updateStepUI();
+
+  if (step === 2) {
+    document.getElementById('ideas-loading').style.display = 'flex';
+    document.getElementById('ideas-content').style.display = 'none';
+    setTimeout(function() {
+      document.getElementById('ideas-loading').style.display = 'none';
+      document.getElementById('ideas-content').style.display = 'block';
+      renderIdeas();
+    }, 2000);
+  }
+
+  // Step 3: auto-advance with check animations
+  if (step === 3) {
+    var checks3 = document.querySelectorAll('#step3-checks .check-item');
+    checks3.forEach(function(c) { c.classList.remove('visible'); });
+    checks3.forEach(function(c, i) {
+      setTimeout(function() { c.classList.add('visible'); }, 300 * (i + 1));
+    });
+    setTimeout(function() {
+      goToStep(4);
+    }, 1500);
+  }
+
+  // Step 4: auto-advance with check animations
+  if (step === 4) {
+    var checks4 = document.querySelectorAll('#step4-checks .check-item');
+    checks4.forEach(function(c) { c.classList.remove('visible'); });
+    checks4.forEach(function(c, i) {
+      setTimeout(function() { c.classList.add('visible'); }, 350 * (i + 1));
+    });
+    setTimeout(function() {
+      goToStep(5);
+    }, 2000);
+  }
+
+  // Step 5: animate AI messages
+  if (step === 5) {
+    var msgs = document.querySelectorAll('#ai-messages .ai-msg');
+    msgs.forEach(function(m) { m.classList.remove('visible'); });
+    msgs.forEach(function(m, i) {
+      setTimeout(function() { m.classList.add('visible'); }, 500 * (i + 1));
+    });
+  }
+}
+
+function updateStepUI() {
+  // Update step indicators
+  for (var i = 1; i <= totalSteps; i++) {
+    var ind = document.getElementById('step-ind-' + i);
+    if (!ind) continue;
+    ind.classList.remove('active', 'done', 'compliance');
+    if (i < currentStep) {
+      ind.classList.add('done');
+      if (i === 4) ind.classList.add('compliance');
+    } else if (i === currentStep) {
+      ind.classList.add('active');
+    }
+  }
+  // Update connectors
+  for (var j = 1; j <= totalSteps - 1; j++) {
+    var conn = document.getElementById('step-conn-' + j);
+    if (!conn) continue;
+    conn.classList.remove('done');
+    if (j < currentStep) conn.classList.add('done');
+  }
+  // Show/hide step content
+  for (var k = 1; k <= totalSteps; k++) {
+    var stepEl = document.getElementById('creation-step-' + k);
+    if (!stepEl) continue;
+    stepEl.style.display = (k === currentStep) ? 'block' : 'none';
+    if (k === currentStep) {
+      stepEl.style.opacity = '0';
+      stepEl.style.transform = 'translateY(8px)';
+      (function(el) {
+        requestAnimationFrame(function() {
+          el.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        });
+      })(stepEl);
+    }
+  }
+}
+
+function renderIdeas() {
+  var grid = document.getElementById('ideas-grid');
+  grid.innerHTML = '';
+  ideasData.forEach(function(idea, idx) {
+    var tagsHtml = idea.tags.map(function(t) {
+      return '<span class="idea-tag ' + t.cls + '">' + t.text + '</span>';
+    }).join('');
+    grid.innerHTML += '<div class="idea-card">' +
+      '<div class="idea-num">' + (idx + 1) + '</div>' +
+      '<div class="idea-title">' + idea.title + '</div>' +
+      '<div class="idea-desc">' + idea.desc + '</div>' +
+      '<div class="idea-meta">' +
+        '<span class="idea-tag">' + idea.duration + '</span>' +
+        tagsHtml +
+      '</div>' +
+      '<div class="idea-actions">' +
+        '<button class="btn-idea-preview" onclick="showToast(\'预览功能开发中\')">预览</button>' +
+        '<button class="btn-idea-select" onclick="goToStep(3)">选择此方案</button>' +
+      '</div>' +
+    '</div>';
+  });
+}
+
+function resetCreationFlow() {
+  currentStep = 1;
+  updateStepUI();
+}
+
+// ===== Compliance Toggle =====
+var compliancePass = true;
+
+function toggleCompliance() {
+  var card = document.getElementById('compliance-card');
+  var btn = document.getElementById('toggle-compliance-btn');
+  var item1 = document.getElementById('cc-item-1');
+  var item2 = document.getElementById('cc-item-2');
+  var item3 = document.getElementById('cc-item-3');
+  var reviewer = document.getElementById('cc-reviewer');
+
+  compliancePass = !compliancePass;
+
+  if (compliancePass) {
+    card.className = 'compliance-card pass';
+    card.querySelector('.cc-title').innerHTML = '✅ 合规审查';
+    item1.innerHTML = '烟草广告法合规 ✓';
+    item1.className = 'cc-item';
+    item2.innerHTML = '品牌调性一致性 ✓';
+    item2.className = 'cc-item';
+    item3.innerHTML = '敏感词检测 ✓（已过滤0个敏感词）';
+    item3.className = 'cc-item';
+    reviewer.innerHTML = '审核人：AI 合规引擎 v2.1';
+    btn.textContent = '模拟违规';
+  } else {
+    card.className = 'compliance-card fail';
+    card.querySelector('.cc-title').innerHTML = '⚠️ 合规审查 · 发现问题';
+    item1.innerHTML = '⚠️ 烟草广告法合规 — 发现疑似吸烟画面';
+    item1.className = 'cc-item violation';
+    item2.innerHTML = '❌ 品牌调性一致性 — 偏离品牌调性';
+    item2.className = 'cc-item violation';
+    item3.innerHTML = '⚠️ 敏感词检测 — 发现2个敏感词';
+    item3.className = 'cc-item violation';
+    reviewer.innerHTML = '审核人：AI 合规引擎 v2.1 · 需人工复核';
+    btn.textContent = '恢复通过';
+  }
+}
+
+// ===== Interactive Marketing =====
+function openCampaignConfig() {
+  document.getElementById('marketing-templates').style.display = 'none';
+  var config = document.getElementById('marketing-config');
+  config.style.display = 'block';
+  config.style.opacity = '0';
+  config.style.transform = 'translateY(8px)';
+  requestAnimationFrame(function() {
+    config.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+    config.style.opacity = '1';
+    config.style.transform = 'translateY(0)';
+  });
+}
+
+function backToTemplates() {
+  document.getElementById('marketing-config').style.display = 'none';
+  var templates = document.getElementById('marketing-templates');
+  templates.style.display = 'block';
+  templates.style.opacity = '0';
+  requestAnimationFrame(function() {
+    templates.style.transition = 'opacity 0.35s ease';
+    templates.style.opacity = '1';
+  });
+}
+
+function selectTheme(el) {
+  document.querySelectorAll('.theme-card').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+}
+
+function selectSwatch(el) {
+  var parent = el.parentElement;
+  parent.querySelectorAll('.color-swatch').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+}
+
+// ===== Phone Preview Modal =====
+function openPhonePreview() {
+  var modal = document.getElementById('phone-modal');
+  modal.style.display = 'flex';
+  requestAnimationFrame(function() {
+    modal.classList.add('show');
+  });
+}
+
+function closePhonePreview(event, force) {
+  if (force || event.target === document.getElementById('phone-modal')) {
+    var modal = document.getElementById('phone-modal');
+    modal.classList.remove('show');
+    setTimeout(function() {
+      modal.style.display = 'none';
+    }, 300);
+  }
+}
+
+// ===== Asset Library =====
+function switchAssetTab(el, type) {
+  document.querySelectorAll('.asset-tab').forEach(function(t) { t.classList.remove('active'); });
+  el.classList.add('active');
+  if (type !== 'all') {
+    showToast('已筛选：' + el.textContent);
+  }
+}
+
+// ===== Poster Clone Functions =====
+function handlePosterUpload(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('original-poster').src = e.target.result;
+    document.getElementById('poster-upload-area').style.display = 'none';
+    document.getElementById('poster-preview-area').style.display = 'block';
+    showToast('海报上传成功');
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetPosterClone() {
+  document.getElementById('poster-upload-area').style.display = 'block';
+  document.getElementById('poster-preview-area').style.display = 'none';
+  document.getElementById('poster-results').style.display = 'none';
+  document.getElementById('poster-file-input').value = '';
+  document.getElementById('region-name').value = '';
+  document.getElementById('region-contact').value = '';
+  document.getElementById('region-address').value = '';
+  document.getElementById('region-time').value = '';
+}
+
+function generatePosterClone() {
+  var regionName = document.getElementById('region-name').value;
+  if (!regionName) {
+    showToast('请填写区域名称');
+    return;
+  }
+
+  // Show loading state
+  var container = document.getElementById('generated-poster-container');
+  container.innerHTML = '<div style="text-align:center;color:#999"><div style="font-size:36px;margin-bottom:8px">⏳</div><div style="font-size:13px">AI 正在生成中...</div></div>';
+
+  // Simulate generation
+  setTimeout(function() {
+    container.innerHTML = '<div style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:600;color:#2D9F2D">生成完成</div></div>';
+    document.getElementById('poster-results').style.display = 'block';
+    showToast('海报生成成功！已生成 3 个版本');
+
+    // Scroll to results
+    setTimeout(function() {
+      document.getElementById('poster-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
+  }, 2500);
+}
+
+// ===== Toast =====
+var toastTimer = null;
+function showToast(msg) {
+  var toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() {
+    toast.classList.remove('show');
+  }, 2500);
+}
+
+// ===== Init =====
+document.addEventListener('DOMContentLoaded', function() {
+  navigateTo('home');
+});
+</script>
+</body>
+</html>
